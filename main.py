@@ -1,32 +1,37 @@
-from agent import agent
 from langchain_core.messages import HumanMessage
-from tools import consultar_cliente, consultar_stock
+from agent import agent
 from transactions import registrar_pedido
+from tools import consultar_stock, consultar_cliente
 
 
-def preguntar():
-    pregunta = input("\nTú: ")
+def consultar_agente():
+    pregunta = input("Pregunta: ")
 
     resultado = agent.invoke(
-        {"messages": [HumanMessage(content=pregunta)]},
+        {
+            "messages": [
+                HumanMessage(content=pregunta)
+            ]
+        },
         config={"recursion_limit": 12}
     )
 
-    print("\nAgente:", resultado["messages"][-1].content)
+    print("\nRESPUESTA:")
+    print(resultado["messages"][-1].content)
 
 
 def preparar_pedido():
-    cliente = input("Código del cliente: ").strip()
-    producto = input("Código del producto: ").strip()
+    cliente = input("Codigo cliente: ").strip()
+    producto = input("Codigo producto: ").strip()
 
     try:
         cantidad = int(input("Cantidad: "))
     except ValueError:
-        print("La cantidad debe ser un número entero.")
+        print("Cantidad no valida.")
         return
 
     if cantidad <= 0:
-        print("La cantidad debe ser mayor que cero.")
+        print("La cantidad debe ser positiva.")
         return
 
     print("\nCLIENTE:")
@@ -35,16 +40,22 @@ def preparar_pedido():
     print("\nPRODUCTO:")
     print(consultar_stock.invoke({"codigo": producto}))
 
-    print("\nSOLICITUD:")
+    print("\nRESUMEN DE SOLICITUD")
     print(f"Cliente: {cliente}")
     print(f"Producto: {producto}")
     print(f"Cantidad: {cantidad}")
 
-    print("\nEsta operación registrará un pedido y descontará stock.")
-    confirmacion = input("Escribe CONFIRMAR para continuar: ").strip()
+    print(
+        "\nLa operacion modificara los pedidos "
+        "y el stock de la base de datos."
+    )
+
+    confirmacion = input(
+        "Escribe CONFIRMAR para registrar: "
+    ).strip()
 
     if confirmacion != "CONFIRMAR":
-        print("Operación cancelada.")
+        print("Operacion cancelada.")
         return
 
     resultado = registrar_pedido(
@@ -53,30 +64,27 @@ def preparar_pedido():
         cantidad=cantidad
     )
 
-    if "error" in resultado:
-        print("\nError:", resultado["error"])
-    else:
-        print("\nPedido registrado:", resultado["pedido_id"])
-        print(f"Total: {resultado['total']:.2f} EUR")
+    print("\nRESULTADO:")
+    print(resultado)
 
 
 def main():
     while True:
         print("\n=== MINI ERP AGENT ===")
         print("1. Preguntar al agente")
-        print("2. Registrar pedido")
+        print("2. Preparar y registrar pedido")
         print("3. Salir")
 
-        opcion = input("Elige una opción: ").strip()
+        opcion = input("Selecciona una opcion: ")
 
         if opcion == "1":
-            preguntar()
+            consultar_agente()
         elif opcion == "2":
             preparar_pedido()
         elif opcion == "3":
             break
         else:
-            print("Opción no válida.")
+            print("Opcion no valida.")
 
 
 if __name__ == "__main__":
